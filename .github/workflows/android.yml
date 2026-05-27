@@ -1,0 +1,66 @@
+name: Build Tauon Android APK
+
+on:
+  workflow_dispatch:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+
+          sudo apt-get install -y \
+            python3-pip \
+            git \
+            zip \
+            unzip \
+            autoconf \
+            libtool \
+            pkg-config \
+            zlib1g-dev \
+            cmake \
+            libffi-dev \
+            libssl-dev \
+            build-essential \
+            ccache
+
+      - name: Install Python dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip3 install cython==0.29.36
+          pip3 install buildozer
+
+      - name: Accept Android SDK licenses
+        run: |
+          mkdir -p ~/.android
+          touch ~/.android/repositories.cfg
+
+      - name: Show repository contents
+        run: |
+          ls -la
+          find . -maxdepth 2 -type f | sort
+
+      - name: Build APK
+        run: |
+          buildozer android debug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tauon-apk
+          path: |
+            bin/*.apk
+            **/*.apk
